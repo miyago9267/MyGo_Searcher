@@ -6,8 +6,9 @@
 </div>
 </template>
 <script setup lang="ts">
-import { watch, ref } from 'vue';
+import { watch, ref, onMounted } from 'vue';
 import ImageView from './ImageView.vue';
+import { getAllImageList } from '../apis/base';
 
 interface img {
     url: string,
@@ -28,20 +29,12 @@ const props = defineProps({
 
 const getImageList = async (query: string) => {
   try {
-    let url = 'https://mygoapi.miyago9267.com/mygo';
-    if (query) {
-      url = `${url}/img?keyword=${query}`;
-    } else {
-      url = `${url}/all_img`;
-    }
-    await fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        images.value = data.urls;
-      })
+    images.value = await getAllImageList(query);
   } catch (error) {
     images.value = [];
   }
+  window.scrollBy(0, 1);
+  window.scrollBy(0, -1);
 }
 
 // 監視 searchQuery 變化
@@ -49,14 +42,18 @@ watch(() => props.searchQuery, (newQuery) => {
   getImageList(newQuery || '');
 }, { immediate: true });
 
-getImageList('');
+onMounted(() => {
+  getImageList('');
+  window.scrollBy(0, 1);
+});
 
 </script>
 
 <style scoped>
 .image-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* grid-template-columns: repeat(4, 1fr); */
+  grid-template-columns: repeat(4, minmax(16rem, 1fr));
   gap: 10px;
   margin-bottom: 10px;
 }
@@ -64,6 +61,12 @@ getImageList('');
 @media screen and (max-width: 768px) {
   .image-row {
     grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .image-row {
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
   }
 }
 </style>
